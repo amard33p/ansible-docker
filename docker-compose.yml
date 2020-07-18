@@ -1,0 +1,14 @@
+version: "3.5"
+
+services:
+  ui:
+    build: ./ui
+    ports:
+      - "8080:8000"
+    depends_on:
+      - api
+
+  api:
+    build: ./api
+    ports:
+      - "8081:5000"

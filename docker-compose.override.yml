@@ -1,0 +1,6 @@
+version: "3.5"
+
+services:
+  ui:
+    volumes:
+      - ./ui/index.html:/app/index.html

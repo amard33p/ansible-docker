@@ -1,0 +1,56 @@
+---
+- hosts: localhost
+  gather_facts: no
+  vars:
+    curdir: "{{ playbook_dir.split('/')[-1] }}"
+
+  tasks:
+  # Get value of devenv from extra args
+  - set_fact:
+      devenv: "{{ devenv | default(false) }}"
+  - debug: 
+      msg: Dev Environment = {{ devenv }}
+
+  - name: Creating bridge network {{ curdir }}_default
+    docker_network:
+      name: "{{ curdir }}_default"
+
+  - name: Building image {{ curdir }}_api
+    docker_image:
+      build:
+        path: ./api
+      source: build
+      name: "{{ curdir }}_api"
+    when: devenv|bool
+
+  - name: Starting container {{ curdir }}_api_1
+    docker_container:
+      name: "{{ curdir }}_api_1"
+      image:  "{{ curdir }}_api"
+      networks_cli_compatible: yes
+      network_mode: "{{ curdir }}_default"
+      networks:
+      - name: "{{ curdir }}_default"
+      ports: 
+        - '8081:5000'
+
+  - name: Building image {{ curdir }}_ui
+    docker_image:
+      build:
+        path: ./ui
+      source: build
+      name: "{{ curdir }}_ui"
+    when: devenv|bool
+
+  - name: Starting container {{ curdir }}_ui_1
+    docker_container:
+      name: "{{ curdir }}_ui_1"
+      image:  "{{ curdir }}_ui"
+      networks_cli_compatible: yes
+      network_mode: "{{ curdir }}_default"
+      networks:
+      - name: "{{ curdir }}_default"
+      ports: 
+        - '8080:8000'
+      volumes:
+        - "{{ './ui/index.html:/app/index.html' if devenv else omit }}"
